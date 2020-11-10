@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# long tag
+
+[ -z ${1} ] && echo "Usage: ectract_tag TAG XML-(FILE)" && exit 1
+tag="${1}"
+[ $# -ge 2 ] && xml="${2}" || xml="$(cat /dev/stdin)"
+echo "$(echo "$xml" | tr "\n" "|" | grep -P -o "<${tag}[^>]*>.*?</${tag}>" | sed "s/\(<${tag}[^>]*>\|<\/${tag}>\)//g;s/\(\([[:space:]]*|\+\)\+[[:space:]]*\)/|/g;s/\(|$\|^|\)//g;s/|[[:space:]]\?/\n/g")"
+
+
+# long tag
+[ -z ${1} ] && echo "Usage: ectract_tag TAG XML-(FILE)" && exit 1
+tag="${1}"
+[ $# -ge 2 ] && xml="${2}" || xml="$(cat /dev/stdin)"
+echo "$(echo "$xml" | tr "\n" "|" | grep -P -o "<${tag}[^>]*?/>" | sed "s/\(<${tag}[[:space:]]*\|\/[[:space:]]*>\)//g")"
+

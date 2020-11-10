@@ -1,0 +1,4 @@
+#!/bin/sh
+
+att="$1"
+echo "$(cat /dev/stdin | grep -P -o "(?<=${att}=\").*?(?=\")" )"

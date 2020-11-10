@@ -1,0 +1,5 @@
+#!/bin/sh
+[ -z ${1} ] && echo "Usage: ectract_tag TAG XML-(FILE)" && exit 1
+tag="${1}"
+[ $# -ge 2 ] && xml="${2}" || xml="$(cat /dev/stdin)"
+echo "$(echo "$xml" | tr "\n" "|" | grep -P -o "<${tag}[^>]*?/>" | sed "s/\(<${tag}[[:space:]]*\|\/[[:space:]]*>\)//g")"

@@ -1,0 +1,114 @@
+#!/bin/sh
+
+# export BIB="$LATEX/BIB.bib"
+# export LIB="$LATEX/bibtex_library"
+
+[ -z "$1" ] && echo "Give either a pdf file or a bibliographic identification (DOI, isbn etc.)as an argument." && exit 1
+
+rename_inplace(){
+	in_file="${1}"
+	out_file="$(echo "${2}" | sed "s/\(.*\/\)\([^\/\(.pdf\)]*\).pdf/\2/g")"
+	#more general
+	# | grep -P -o "(?<=/)?[^/(\.pdf)]*(?=\.pdf)?")" # works, but not general
+	# echo "out: ${out_file}"
+	# echo "in: ${in_file}"
+	new_name="$(echo "${in_file}" | sed "s|\([^\/]*\/\)*[^\/]*.pdf|\1${out_file}.pdf|g")"
+	# echo "${new_name}"
+	mv "${in_file}" "${new_name}"
+}
+
+change_bibkey(){
+	[ ! -z "${2}" ] && bibtex="${2}" || bibtex="$(cat /dev/stdin)"
+	key="${1}"
+	echo "${bibtex}" | sed "s/\(\s*@\w\+{\s*\)[^,]*\s*,/\1$key,/"
+}
+
+set_remote_repo(){
+	read -p "Enter the remote git repo you want to use: " reponame
+	read -p "Are you sure you want to use ${reponame}! as your remote repo? [y/n]" confirm
+	[ "${confirm}" = "y" ] && git -C ${LIB} clone ${reponame}
+	# [ "${confirm}" = "y" ] && git -C ${LIB} remote add --set-upstream ${reponame} git fetch 
+	
+}
+
+has_opt=false
+while getopts ":hf:rk:p:eF:A:D:I:isuv" opt; do
+	has_opt=true
+	case ${opt} in
+		h)
+			echo "getbib usage: getbib OPT [OPTARG]"
+			echo ""
+			echo "[-f] [file]:	Selects file for treatment"
+			echo "[-r]:		Rename file according to bibtex-key"
+			echo "[-k] [key]:	Sets bibtex-key"
+			echo "[-p] [path]:	Sets path of bibtex library"
+			echo "[-e]:		Exports bibtex-entry"
+			echo "[-F] [file]:	Retrieves bibtex from file text-data."
+			echo "[-A] [arXiv-ID]:	Retrieves bibtex from arXiv-ID via arXiv-API"
+			echo "[-D] [doi]:	Retrieves bibtex from DOI via doi.org"
+			echo "[-I] [isbn]:	Retrieves bibtex from ISBN"
+			echo "[-i]:		List all bibtex entries in library."
+			echo "[-s]:		Sync library with remote Git repo."
+			echo "[-u]:		Updates library."
+			echo "[-R]:		Interacive prompt for remote repo (for syncing library)"
+		;;
+		f) file="${OPTARG}"
+		;;
+		r) rename=true
+		;;
+		k) key="${OPTARG}"
+		;;
+		p) path="${OPTARG}"
+		;;
+		e) expt=true
+		;;
+		F) file="${OPTARG}" && bibtex="$(getbib_file "${file}")"
+		;;
+		A) bibtex="$(arxiv_to_bibtex "${OPTARG}")"
+		;;
+       		D) bibtex="$(doi_to_bibtex "${OPTARG}")"
+		;;
+		I) bibtex="$(isbn_to_bibtex "${OPTARG}")"
+		;;
+		R) set_remoterepo=true
+		;;
+		i) list=true # && echo "listing references in library"
+		;;
+		s) sync=true
+		;;
+		u) update=true
+		;;
+		v) verbose=true
+		;;
+		:)
+			echo "Usage: getbib [-FADI / null] [id/filename];" 
+			echo "An argument for -${OPTARG} is needed." 1>&2; exit 1
+		;;
+		\?)
+			echo "Usage: getbib [-FADI / null] [id/filename];" 
+			echo "Invalid option, -${OPTARG} does not exist." 1>&2; exit 1
+		;;
+	esac
+done
+shift "$((OPTIND -1))"
+
+# [ "${has_opt}" = false ] && getbib_file "${1}"
+
+# [ ! -z "${file}" ] && bibtex="$(getbib_file "${file}")"
+# --- Defining/extracting bib-key ---
+[ ! -z "${bibtex}" ] && { [ ! -z "${key}" ]&& bibtex="$(change_bibkey "${key}" "${bibtex}")" || key="$(get_bib_attrib key "${bibtex}")"; }
+# echo "${bibtex}"
+# echo "${key}"
+[ "${rename}" = true ] && rename_inplace "${file}" "${key}" 
+
+# --- exporting bib-entry ---
+[ -z "${path}" ] && path="${LIB}" # && echo "${dir}"
+[ ! -z "${bibtex}" ] && { [ "${expt}" = true ] && echo "$bibtex" > "${path}/${key}.bib" || echo "${bibtex}"; }
+
+# --- Meta features for BOC ---
+[ "${update}" = true ] && echo -n "" > "${BIB}" && ls -d ${LIB}/* | xargs cat >> "$BIB" # /home/chrberrig/Documents/LaTeX/RUC.bib # | grep -P -io ".*" 
+# [ "${list}" = true ] && ls "${LIB}" | grep -P -io ".*(?=\.bib)"
+[ "${verbose}" = true ] && git -C ${LIB} status -uno
+[ "${sync}" = true ] && git -C ${LIB} add . && git -C ${LIB} commit -m "Library update" && git -C ${LIB} push
+[ "${list}" = true ] && ls -ld ${LIB}/* | cut -d " " -f 9 | xargs -L1 bib_info
+[ "${set_remoterepo}" = true ] && 

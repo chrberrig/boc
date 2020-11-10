@@ -1,0 +1,16 @@
+#!/bin/sh
+
+attrib="${1}"
+bibtex=${2:-$(cat -)}
+# [ ! -z "${2}" ] && bibtex="${2}" || bibtex="$(cat /dev/stdin)"
+
+# [ "${attrib}" = "key" ] && echo "${bibtex}" | grep -P -i "@" | sed "s/\(\s*@\w\+{\)\([^,]*\)\(\s*\,\?\)/\2/" || 
+# echo "${bibtex}" | grep -P -i "(${attrib}\s*=)" | sed "s/\s*${attrib}\s*=\s*\({\s*\(.*\)\s*}\|\"\s*\(.*\)\s*\"\|\(.*[^,]\)\)\s*,*\s*$/\2\3\4/"
+# # | sed "s/\(\s*${attrib}\s*=\s*\({\|\"\)\?\s*\)\([^}\"]*\)\(\s*\(}\|\"\)\?,\?\)/\3/"
+
+[ "${attrib}" = "key" ] && ret="$(echo "${bibtex}" | grep -P -i "@" | sed "s/\(\s*@\w\+{\)\([^,]*\)\(\s*\,\?\)/\2/")" || 
+ret="$(echo "${bibtex}" | grep -P -i "(${attrib}\s*=)" | sed "s/\s*${attrib}\s*=\s*\({\s*\(.*\)\s*}\|\"\s*\(.*\)\s*\"\|\(.*[^,]\)\)\s*,*\s*$/\2\3\4/")"
+
+[ -z "${ret}" ] && exit 1 || echo "${ret}"
+
+

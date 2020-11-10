@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# arXiv styles:
+# New style:
+# Old Style:
+# arxiv_id=1910.03889
+# arxiv_id="1310.2220"
+# arxiv_id="1604.06773"
+# arxiv_id="0902.0885"
+# arxiv_id="1909.00346"
+
+[ -z $1 ] && echo "arxiv_to_bibtex needs a valid arXiv-ID as argument." && exit 1
+arxiv_id="${1}"
+# echo "${arxiv_id}"
+
+entry="$(echo "$(curl -s "https://export.arxiv.org/api/query?id_list=${arxiv_id}")" | xmltag entry)"
+
+doi="$(echo "${entry}" | xmltag arxiv:doi)"
+[ ! -z "${doi}" ] && echo "$(doi_to_bibtex $doi)"
+[ -z "${doi}" ] &&
+author="$(echo "${entry}" | xmltag author | xmltag name)" &&
+first_author="$(echo "${author}" | head -n 1)" &&
+title="$(echo "${entry}" | xmltag title)" &&
+journal="$(echo "${entry}" | xmltag arxiv:journal_ref)" &&
+year="$(echo "${entry}" | xmltag published | cut -d '-' -f1)" &&
+month="$(echo "${entry}" | xmltag published | cut -d '-' -f2)" &&
+day="$(echo "${entry}" | xmltag published | cut -d '-' -f3 | cut -d 'T' -f1)" &&
+eprint="${arxiv_id}" &&
+primaryClass="$(echo "${entry}" | xmlstag arxiv:primary_category | get_attrib term)" &&
+key="$(echo "${first_author}" | cut -d ' ' -f2)_${year}"
+
+# Massage:
+month_list=( "january" "febuary" "march" "april" "may" "june" "july" "august" "september" "october" "november" "december" )
+author="$(echo "${author}" | tr "\n" "|" | sed "s/.$//g;s/|/ and /g")"
+month_chars="$(echo "${month_list[$(echo "${month}" | sed "s/0//g" )-1]}" | grep -P -o "^.{3}")"
+
+[ -z "${doi}" ] &&
+echo "@misc{${key},
+	author = {${author}},
+	title = {${title}},
+	year = {${year}},
+	month = ${month_chars},
+	archivePrefix = {arXiv},
+	eprint = {${eprint}},
+	primaryClass = {${primaryClass}}
+}"
+
+# published="$(echo "${entry}" | xmltag published | cut -d 'T' -f1)"
+# archive="arXiv" &&
+# keywords= &&
+# volume= &&
+# number= &&
+# pages= &&
+# adsurl= &&
+# adsnote= &&
+
+# [ ! -z "${journal}" ] && echo "journal = {${journal}},"
+# keywords = {Quantum Physics},\n
+# echo "day = ${day},"
+# volume = {373},\n
+# number = {27-28},\n
+# pages = {2301-2305},\n
+# doi = {10.1016/j.physleta.2009.04.068},\n
+# adsurl = {https://ui.adsabs.harvard.edu/abs/2009PhLA..373.2301C},\n
+# adsnote = {Provided by the SAO/NASA Astrophysics Data System}"
+
+
+# echo "@Article{,\n
+# author = {{Chru{\'s}ci{\'n}ski}, Dariusz and {Kossakowski}, Andrzej},\n
+# title = {Geometry of quantum states: New construction of positive maps},\n
+# journal = {Physics Letters A},\n
+# keywords = {Quantum Physics},\n
+# year = 2009,\n
+# month = jun,\n
+# volume = {373},\n
+# number = {27-28},\n
+# pages = {2301-2305},\n
+# doi = {10.1016/j.physleta.2009.04.068},\n
+# archivePrefix = {arXiv},\n
+# eprint = {0902.0885},\n
+# primaryClass = {quant-ph},\n
+# adsurl = {https://ui.adsabs.harvard.edu/abs/2009PhLA..373.2301C},\n
+# adsnote = {Provided by the SAO/NASA Astrophysics Data System}"

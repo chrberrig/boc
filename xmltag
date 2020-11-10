@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# tag_extract takes as input 2 arguments:
+# First argument is an XML-type tag to find in file.
+# Second argument is file in which the tag content should be extracted from.
+
+# efficient no-optio implementation.
+[ -z ${1} ] && echo "Usage: ectract_tag TAG XML-(FILE)" && exit 1
+tag="${1}"
+[ $# -ge 2 ] && xml="${2}" || xml="$(cat /dev/stdin)" 
+echo "$(echo "$xml" | tr "\n" "|" | grep -P -o "<${tag}[^>]*>.*?</${tag}>" | sed "s/\(<${tag}[^>]*>\|<\/${tag}>\)//g;s/\(\([[:space:]]*|\+\)\+[[:space:]]*\)/|/g;s/\(|$\|^|\)//g;s/|[[:space:]]\?/\n/g")"
+
+# # implementation w options for long/short format XML... still needs massage for timeoptimizasion.
+# # also, it throws an error such that && dont work afterwards...
+# [ -z ${1} ] && echo "Usage: ectract_tag [ls] TAG XML-(FILE)" && exit 1
+# args=("$@") 
+# last="${args[-1]}"
+# has_opt=false
+# while getopts ":hl:s:a:" opt; do
+#         has_opt=true
+#         [ -z ${OPTARG} ] && echo "Usage: ectract_tag [ls] TAG XML-(FILE)" && exit 1
+#         tag="${OPTARG}"
+#         [ "${tag}" = "${last}" ] && xml="$(cat /dev/stdin)" || xml="$3"
+#         case $opt in
+#                 h)
+#                         echo "[h]: Help."
+#                         echo "[l]: (long) extract content from long-format xml tag."
+#                         echo "[s]: (short/simple) extract content from short-format xml tag."
+#                 ;;
+#                 l) echo "$(echo "$xml" | tr "\n" "|" | grep -P -o "<${tag}[^>]*>.*?</${tag}>" | sed "s/\(<${tag}[^>]*>\|<\/${tag}>\)//g;s/\(\([[:space:]]*|\+\)\+[[:space:]]*\)/|/g;s/\(|$\|^|\)//g;s/|[[:space:]]\?/\n/g")"
+#                 ;;
+#                 s) echo "$(echo "$xml" | tr "\n" "|" | grep -P -o "<${tag}[^>]*?/>" | sed "s/\(<${tag}[[:space:]]*\|\/[[:space:]]*>\)//g" )" 
+# #;s/\(\([[:space:]]*|\+\)\+[[:space:]]*\)/|/g;s/\(|$\|^|\)//g;s/|[[:space:]]\?/\n/g")"
+#                 ;;
+# 	esac
+# done
+# shift "$((OPTIND -1))"
+# 
+# # defaults:
+# [ "$has_opt" = false ] && [ $# -eq 2 ] && xml="${2}" || xml="$(cat /dev/stdin)" 
+# [ "$has_opt" = false ] &&  extract_tag -l "$1" "${xml}"
+
+

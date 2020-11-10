@@ -1,0 +1,14 @@
+#!/bin/sh
+
+file="$(echo "${1}" | sed "s/ /\\ /g")" &&
+[ -f "${file}" ] &&
+bibid="$(extract_bibid "${file}")" &&
+id_type="$(echo "${bibid}" | cut -d ':' -f1)" &&
+id="$(echo "${bibid}" | cut -d ':' -f2)" &&
+# [ "${id}" = "No ID found" ] && echo "No ID found to retrieve Bib-data from" && exit 1 ||
+bibtex="$(eval "${id_type}_to_bibtex ${id}")"
+# [ "${id}" != "No ID found" ] && bibtex="$(eval "${id_type}_to_bibtex ${id}")"
+# eventually, inset prompt functionality to query for manual bibliographic identifier ?
+# bibtex confirmation:
+first_char="$(echo "${bibtex}" | tr "\n" "|" | cut -c1 )"
+[ "${first_char}" != "@" ] && exit 1 || echo "${bibtex}"

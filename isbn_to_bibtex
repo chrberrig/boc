@@ -1,0 +1,8 @@
+#!/bin/sh
+[ -z $1 ] && echo "isbntobibtex needs a valid SIBN ID as argument."
+tag=textarea 
+xml="$(curl -s "https://www.ottobib.com/isbn/${1}/bibtex")"
+echo "$(xmltag "${tag}" "${xml}")"
+
+# echo "$(curl -s "https://www.ottobib.com/isbn/978-0-553-10953-5/bibtex" | tr "\n" "|" | grep -o "<${tag}[^>]*>.*</${tag}>" | sed "s/\(<${tag}[^>]*>\|<\/${tag}>\)//g;s/| /\n/g")"
+

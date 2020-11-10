@@ -1,0 +1,6 @@
+#!/bin/sh
+
+[ ! -z "${2}" ] && bibtex="${2}" || bibtex="$(cat /dev/stdin)"
+key="${1}"
+
+echo "${bibtex}" | sed "s/\(\s*@\w\+{\s*\)[^,]*\s*,/\1$key,/"

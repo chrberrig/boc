@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# using ANSI-colours for posix-compliance:
+# https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
+doi_col='\033[033m' # orange
+arxiv_col='\033[031m' # red
+isbn_col='\033[034m' # blue
+def_col='\033[039m' # distro default
+
+args="${1:+"$@"}"
+bib_file="${args:-$(cat -)}" 
+
+# bib_file="${1:-$(cat -)}" 
+# [ -z "${bib_file}" ] && echo "Enter valid Bibtex file as argument or stdin" && exit 1
+
+[ -z "${bib_file}" ] && echo "No valid bibfile given" && exit 1
+bib_entry="$(cat "${bib_file}")"
+
+key="$(get_bib_attrib key "${bib_entry}")"
+title="$(get_bib_attrib title "${bib_entry}")"
+author="$(get_bib_attrib author "${bib_entry}")"
+
+# with colors
+# id="${doi_col}doi${def_col}: $(get_bib_attrib doi "${bib_entry}")" ||
+# id="${isbn_col}isbn${def_col}: $(get_bib_attrib isbn "${bib_entry}")" ||
+# id="${arxiv_col}arXiv${def_col}: $(get_bib_attrib eprint "${bib_entry}")"
+
+# No colors
+id="doi: $(get_bib_attrib doi "${bib_entry}")" ||
+id="isbn: $(get_bib_attrib isbn "${bib_entry}")" ||
+id="arXiv: $(get_bib_attrib eprint "${bib_entry}")"
+ 
+echo -e "[${key}] - ${id} | (${author}) \n \t - '${title}' \n"
